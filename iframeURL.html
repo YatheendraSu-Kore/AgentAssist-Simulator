@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>AA Simulator</title>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonwebtoken/8.5.1/jsonwebtoken.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+    <style>
+        #my-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #help {
+            display: none;
+        }
+
+        .container {
+            width: 95%;
+        }
+
+        .full-container {
+            width: 100%;
+        }
+
+        .custom-card {
+            border: 2px solid #FFF;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .bg {
+            background-color: #1b1313;
+            color: #FFF;
+        }
+
+        #iframe-container {
+            display: flex;
+            width: 50%;
+            height: 730px;
+            padding: 5px;
+            border: 2px solid #1b1313;
+            border-radius: 10px;
+        }
+
+        .header-card {
+            border: 1px solid #1b1313;
+            padding: 5px;
+            border-radius: 10px;
+            background-color: #1b1313;
+            color: #FFF;
+            text-align: center;
+        }
+
+        .dark-color {
+            color: #1b1313;
+        }
+
+        .brand-logo {
+            text-align: center;
+        }
+
+        .soft-button {
+            margin: 0px;
+            border-radius: 10px;
+            align-items: center;
+            text-align: justify;
+        }
+
+        .soft-button:hover {
+            background-color: #1b1313;
+            box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .help-li {
+            color: rgb(24, 120, 26);
+            /* Change 'blue' to your desired text color */
+        }
+
+        /* Style for user messages */
+        .agent-message {
+            text-align: left;
+            color: #fff;
+            background-color: #207a6a;
+            border-radius: 10px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+            clear: both;
+            float: right;
+        }
+
+        /* Style for agent messages */
+        .user-message {
+            text-align: left;
+            color: #000;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+            clear: both;
+            float: left;
+        }
+
+        .chat-window {
+            height: 720px;
+            border: 2px solid #1b1313;
+            overflow-y: auto;
+            padding: 5px 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="nav-wrapper #1b1313 grey darken-4">
+            <h4 class="brand-logo center">AgentAssist Simulator </h4>
+        </div>
+    </nav>
+    <div class="container">
+        <br>
+        <div class="row">
+            <button id="show-help" class="btn waves-effect waves-light bg soft-button">Show Help</button>
+            <div id="help" style="display: none;" class="container">
+                <p> This Simulator helps you to debug the Iframe related activities.<br>
+                    Ways of using this Simulator,
+
+                    <ul>
+                        <li class="help-li">Already have an AgentAssist Iframe URL?</li>
+                        <li>- Then paste it in the Iframe Field and interact with it</li>
+                        <li class="help-li">Have a JWT and need help with iframe URL generation?</li>
+                        <li>- Then paste JWT in its field and provide other required details (apart from clientId,
+                            clientSecret)</li>
+                        <li class="help-li">You have BotId, clientId, clientSecret, and Host URL?</li>
+                        <li>- Then you can generate an AgentAssist Iframe URL by providing the info</li>
+                    </ul>
+                </p>
+            </div>
+            <div class="container col s12">
+                <div class="row">
+                    <form id="config-form" class="custom-card z-depth-3">
+                        <div class="row">
+                            <div class="form-group col s4">
+                                <label for="bot-id" class="dark-color">Bot ID</label>
+                                <input type="text" id="bot-id" name="botid">
+                            </div>
+                            <div class="form-group col s4">
+                                <label for="client-id" class="dark-color">Client ID</label>
+                                <input type="text" id="client-id" name="clientId">
+                            </div>
+                            <div class="form-group col s4">
+                                <label for="client-secret" class="dark-color">Client Secret</label>
+                                <input type="text" id="client-secret" name="clientSecret">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col s12">
+                                <label for="jwt-token" class="dark-color">JWT
+                                    <button type="button" id="generate-jwt"
+                                        class="waves-effect waves-light bg soft-button">generate JWT</button>
+                                </label>
+                                <input type="text" id="jwt-token" name="token">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col s3">
+                                <label for="host" class="dark-color">Host</label>
+                                <input type="text" id="host" name="host" value="huddl-agentassist-dev.kore.ai">
+                            </div>
+                            <div class="form-group col s3">
+                                <label for="conversation-id" class="dark-color">Conv ID:</label>
+                                <input type="text" id="conversation-id" name="conversationid">
+                            </div>
+                            <div class="form-group col s1">
+                                <label for="protocol" class="dark-color">Protocol</label>
+                                <input type="text" id="protocol" name="protocol" value="https">
+                            </div>
+                            <div class="form-group col s1">
+                                <label for="experience" class="dark-color">Experience</label>
+                                <input type="text" id="experience" name="experience">
+                            </div>
+                            <div class="form-group col s1">
+                                <label for="interactive-language" class="dark-color">Language</label>
+                                <input type="text" id="interactive-language" name="interactiveLanguage">
+                            </div>
+                            <div class="form-group col s1">
+                                <label for="version" class="dark-color">Version:</label>
+                                <input type="text" id="version" name="version" value="v3">
+                            </div>
+                            <button class="btn waves-effect waves-light bg soft-button" :hover>Submit</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="row">
+                    <div class="custom-card z-depth-3 col s12">
+                        <h9 class="col s6">IFrame URL : <h10> <i> scroll down for recent iframes </i></h10>
+                        </h9>
+                        <div class="row col s12">
+                            <input id="iframeURL" type="text" class="col s11">
+                            <button class="btn-small waves-effect waves-light bg soft-button col s1"
+                                id="render-agentassist" style="align-items: right;"> Render</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="full-container">
+            <div class="row">
+                <div>chat window</div>
+                <div class="col s5 custom-card z-depth-3 chat-window" id="chat-window">
+                </div>
+                <div id="iframe-container" class="col s6 offset-s1 custom-card z-depth-3">
+                    <h7 id="iframe-validation" class="red-text"></h7>
+                    <br>
+                    <iframe id="my-iframe" src=""></iframe>
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="input-field col s3 custom-card z-depth-3" style="margin-right: 10px;">
+                    <h6>User Message</h6>
+                    <input id="user-message" type="text">
+                </div>
+                <div class="input-field col s3 custom-card z-depth-3">
+                    <h6>Agent Message</h6>
+                    <input id="agent-message" type="text">
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col s12">
+            <div class="row">
+                <div class="col s2">
+                    <h6 class="header-card textContent">Recent Iframes</h6>
+                </div>
+                <ul class="col s12 collection" id="recentIframesList">
+                </ul>
+            </div>
+        </div>
+    </div>
+    </div>
+    <footer class="page-footer #1b1313 grey darken-4"></footer>
+    <script>
+        function SimulatorScripting() {
+            console.log('Simulator Scripting Start...');
+            let conversationIdField = document.getElementById('conversation-id');
+            if (!conversationIdField.value) {
+                let convId = generateRandomConvID();
+                conversationIdField.value = convId;
+            }
+            let form = document.getElementById('config-form');
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                var formData = new FormData(form),
+                    config = {};
+                formData.forEach((value, key) => {
+                    config[key] = value;
+                });
+                if (!config.token) {
+                    config.token = generateJWTToken(config.clientId, config.clientSecret, config.botid);
+                    console.log("%% ~ config.jwtToken:", config.token)
+                }
+                let iframe = document.getElementById('my-iframe');
+                let iframeURL = buildUrl(config);
+                let iframeField = document.getElementById("iframeURL");
+                iframeField.value = iframeURL;
+                iframe.src = iframeURL;
+                saveEntry(iframeURL);
+            });
+
+            function generateRandomConvID(idPrefix, differentiator) {
+                if (!differentiator) differentiator = 1;
+                if (!idPrefix) idPrefix = "atesta-";
+                return idPrefix + (new Date().getTime() + differentiator).toString(36);
+            }
+
+            function generateJWTToken(clientId, clientSecret, botId) {
+                var header = {
+                    "alg": "HS256",
+                    "typ": "JWT"
+                };
+
+                var payload = {
+                    sub: clientId,
+                    appId: clientId,
+                    iss: clientId,
+                    iat: Math.floor(Date.now() / 1000),
+                };
+
+                // Encode header and payload
+                var encodedHeader = base64url(CryptoJS.enc.Utf8.parse(JSON.stringify(header)));
+                var encodedPayload = base64url(CryptoJS.enc.Utf8.parse(JSON.stringify(payload)));
+
+                // Create token to be signed
+                var tokenToSign = encodedHeader + "." + encodedPayload;
+
+                // Sign the token with HMAC SHA256 using the secret key
+                var signature = CryptoJS.HmacSHA256(tokenToSign, clientSecret);
+                var encodedSignature = base64url(signature);
+
+                // Final JWT token
+                var jwtToken = tokenToSign + "." + encodedSignature;
+
+                console.log("Generated JWT token:", jwtToken);
+
+                return jwtToken;
+            }
+
+            function base64url(source) {
+                // Encode in standard Base64
+                var encodedSource = CryptoJS.enc.Base64.stringify(source);
+                // Remove padding equal characters
+                encodedSource = encodedSource.replace(/=+$/, '');
+                // Replace characters according to JWT spec
+                encodedSource = encodedSource.replace(/\+/g, '-').replace(/\//g, '_');
+                return encodedSource;
+            }
+
+            function buildUrl(config) {
+                var sdkEndpointV2 = "koreagentassist-sdk/UI/agentassist-iframe.html";
+                var sdkEndpointV3 = "koreagentassist-sdk-v3/UI/agentassist-iframe.html";
+                var sdkEndpoint = sdkEndpointV2,
+                    isCall = false,
+                    agentAssistURL = config.agentAssistURL,
+                    convId = config.conversationid || generateRandomConvID(undefined),
+                    experience = config.experience || "chat",
+                    version = config.version || "v3",
+                    protocol = config.protocol || "https",
+                    url = protocol + '://' + config.host + '/';
+                console.log("> Conversation Id: ", convId);
+                if (!agentAssistURL) {
+                    agentAssistURL = `${config.protocol}://${config.host}`;
+                }
+                if (experience.toLowerCase() === "voice") {
+                    isCall = true;
+                }
+                if (version.toLowerCase() === "v3") {
+                    sdkEndpoint = sdkEndpointV3;
+                }
+                let iFrameURL =
+                    `${config.protocol}://${config.host}/${sdkEndpoint}?token=${config.token}&botid=${config.botid}&agentassisturl=${agentAssistURL}&conversationid=${convId}&isCall=${isCall}`;
+                if (config.interactiveLanguage) {
+                    iFrameURL += `&interactiveLanguage=${config.interactiveLanguage}`
+                }
+                console.log("> IFrame URL : ", iFrameURL);
+                return iFrameURL;
+            }
+
+            function sendPostMessageEvents(message, eventName) {
+                var iframe = document.getElementById('my-iframe');
+                if (!iframe.src) return;
+                let interactiveEvents = ["agentAssist.CustomerMessage", "agentAssist.AgentMessage"]
+                var botId = document.getElementById('bot-id').value;
+                var conversationId = document.getElementById('conversation-id').value;
+                if (interactiveEvents.includes(eventName) > -1) {
+                    let authorType = "USER";
+                    if (eventName === "agentAssist.CustomerMessage") authorType = "USER";
+                    else if (eventName === "agentAssist.AgentMessage") authorType = "AGENT";
+                    var data = {
+                        "author": {
+                            "Id": "authorids",
+                            "type": authorType,
+                            "firstName": "first name",
+                            "lastName": "last name"
+                        },
+                        "conversationid": conversationId,
+                        "name": eventName,
+                        "value": message,
+                    }
+                    iframe.contentWindow.postMessage(data, "*");
+                }
+            }
+
+            function saveEntry(entry) {
+                var entries = JSON.parse(localStorage.getItem('entries')) || [];
+                entries.unshift(entry);
+                entries = entries.slice(0, 5);
+                localStorage.setItem('entries', JSON.stringify(entries));
+                displayEntries();
+            }
+
+            function displayEntries() {
+                var entryList = document.getElementById('recentIframesList');
+                entryList.innerHTML = '';
+                var entries = JSON.parse(localStorage.getItem('entries')) || ["Apple", "Gauva", "Grapes"];
+                entries.forEach(function (entry) {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = entry;
+                    listItem.classList = ["collection-item"];
+                    entryList.appendChild(listItem);
+                });
+            }
+
+            function isValidIframe(iframeURL) {
+                // Regular expression for URL pattern
+                var pattern = new RegExp('^(https?:\\/\\/)?' +
+                    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' +
+                    '((\\d{1,3}\\.){3}\\d{1,3}))' +
+                    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' +
+                    '(\\?[;&a-z\\d%_.~+=-]*)?', 'i');
+
+                // Return true if the string matches the pattern
+                return pattern.test(iframeURL);
+            }
+
+            function breakDownIframe(iframeURL) {
+                const urlObj = new URL(iframeURL);
+                const queryParams = Object.fromEntries(urlObj.searchParams.entries());
+                let protocol = urlObj.protocol.slice(0, -1),
+                    version = "v3";
+                try {
+                    version = urlObj.pathname.split("/")[1].split("-")[2];
+                } catch (err) {
+                    console.log("err", err);
+                }
+                let urlConfigs = {
+                    ...queryParams,
+                    host: urlObj.host,
+                    protocol: protocol,
+                    version: version
+                };
+                console.log("%% ~ breakDownIframe ~ urlConfigs:", urlConfigs);
+                return urlConfigs;
+            }
+
+            function decodeJWT(token) {
+                var segments = token.split('.');
+                var decodedSegments = segments.map(function (segment) {
+                    return CryptoJS.enc.Base64.parse(segment).toString(CryptoJS.enc.Utf8);
+                });
+
+                return decodedSegments;
+            }
+
+            function populateConfigs(urlConfigs) {
+                let allConfigs = [
+                    "jwt-token",
+                    "bot-id",
+                    "host",
+                    "protocol",
+                    "experience",
+                    "interactive-language",
+                    "version",
+                    "conversation-id"
+                ];
+                allConfigs.forEach(function (config) {
+                    let configElem = document.getElementById(config);
+                    if (configElem) {
+                        configElem.value = urlConfigs[configElem.name] || "";
+                    }
+                })
+                return;
+            }
+
+            function renderAgentAssist(iframeUrl) {
+                var iframe = document.getElementById('my-iframe');
+                var iframeValidation = document.getElementById('iframe-validation');
+                console.log("%% ~ iframeValidation:", iframeValidation);
+                console.log("%% ~ iframe:", iframe);
+                if (isValidIframe(iframeUrl)) {
+                    console.log("valid");
+                    let urlConfigs = breakDownIframe(iframeUrl);
+                    populateConfigs(urlConfigs);
+                    iframe.src = iframeUrl;
+                    saveEntry(iframeUrl);
+                } else {
+                    console.log("invalid");
+                    iframeValidation.textContent = "Invalid Iframe"
+                }
+            }
+
+            function addUserMessage(message) {
+                var div = document.createElement('div');
+                div.textContent = message;
+                div.className = 'user-message';
+                chatWindowComponent.appendChild(div);
+                chatWindowComponent.scrollTop = chatWindowComponent.scrollHeight;
+            }
+
+            function addAgentMessage(message) {
+                var div = document.createElement('div');
+                div.textContent = message;
+                div.className = 'agent-message';
+                chatWindowComponent.appendChild(div);
+                chatWindowComponent.scrollTop = chatWindowComponent.scrollHeight;
+            }
+
+            function handleIncomingEventsFromIframe(messageData) {
+                let eventName = messageData.name;
+                if (eventName === "agentAssist.SendMessage") {
+                    let message = messageData.payload;
+                    addAgentMessage(message);
+                }
+                if (eventName === "agentAssist.CopyMessage") {
+                    let message = messageData.payload;
+                    let agentMsgField = document.getElementById('agent-message');
+                    agentMsgField.value = message;
+
+                }
+            }
+
+            displayEntries();
+            var userMessageField = document.getElementById('user-message');
+            var agentMessageField = document.getElementById('agent-message');
+            var chatWindowComponent = document.getElementById('chat-window');
+            var iframeField = document.getElementById('iframeURL');
+            let helpButton = document.getElementById('show-help');
+            let help = document.getElementById('help');
+            let renderAgentAssistBtn = document.getElementById('render-agentassist');
+            let generateJWTBtn = document.getElementById('generate-jwt')
+
+            window.addEventListener('message', function (event) {
+                var messageData = event.data;
+                console.log('Received message from iframe:', messageData);
+                handleIncomingEventsFromIframe(messageData);
+            });
+
+
+            userMessageField.addEventListener('keypress', function (event) {
+                if (event.keyCode === 13) {
+                    let message = event ? event.target ? event.target.value : undefined : undefined;
+                    if (message) {
+                        addUserMessage(message);
+                        sendPostMessageEvents(message, "agentAssist.CustomerMessage");
+                        userMessageField.value = "";
+                    }
+                }
+            });
+
+            agentMessageField.addEventListener('keypress', function (event) {
+                if (event.keyCode === 13) {
+                    let message = event ? event.target ? event.target.value : undefined : undefined;
+                    if (message) {
+                        addAgentMessage(message);
+                        sendPostMessageEvents(message, "agentAssist.AgentMessage");
+                        agentMessageField.value = "";
+                    }
+                }
+            });
+
+            iframeField.addEventListener('keypress', function (event) {
+                if (event.keyCode === 13) {
+                    renderAgentAssist(event.target.value);
+                }
+            });
+
+
+            helpButton.addEventListener("click", function () {
+                if (help.style.display === "none") {
+                    help.style.display = "block";
+                    helpButton.textContent = "Hide Help";
+                } else {
+                    help.style.display = "none";
+                    helpButton.textContent = "Show Help";
+                }
+            });
+
+            renderAgentAssistBtn.addEventListener("click", function () {
+                renderAgentAssist(iframeField.value);
+            });
+
+            generateJWTBtn.addEventListener('click', function () {
+                let clientId = document.getElementById("client-id").value;
+                let clientSecret = document.getElementById("client-secret").value;
+                let botId = document.getElementById("bot-id").value;
+                let token = generateJWTToken(clientId, clientSecret, botId);
+                let jwtTokenField = document.getElementById("jwt-token");
+                jwtTokenField.value = token
+            })
+
+        }
+
+
+
+        SimulatorScripting();
+    </script>
+</body>
+
+</html>
